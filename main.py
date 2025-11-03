@@ -8,9 +8,9 @@ import pytesseract
 from pytesseract import Output
 
 # Load environment variables (Koyeb will set these)
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-API_ID = os.environ.get("API_ID", "")
-API_HASH = os.environ.get("API_HASH", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "7852091851:AAHQr_w4hi-RuJ5sJ8JvQCo_fOZtf6EWhvk")
+API_ID = os.environ.get("API_ID", "21688431")
+API_HASH = os.environ.get("API_HASH", "db274cb8e9167e731d9c8305197badeb")
 
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN is not set. Please set BOT_TOKEN in environment variables.")
