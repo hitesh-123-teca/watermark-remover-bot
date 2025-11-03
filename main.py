@@ -6,6 +6,8 @@ from pyrogram.types import Message
 from PIL import Image
 import pytesseract
 from pytesseract import Output
+from flask import Flask
+import threading
 
 # Environment variables (Koyeb or .env)
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "7852091851:AAHQr_w4hi-RuJ5sJ8JvQCo_fOZtf6EWhvk")
@@ -124,6 +126,24 @@ async def handle_video(client: Client, message: Message):
     os.remove(video_path)
     os.remove(output_path)
 
+# ---------------------------
+# Koyeb Health Check Server
+# ---------------------------
+def run_health_server():
+    health_app = Flask(__name__)
+
+    @health_app.route('/')
+    def home():
+        return "OK", 200
+
+    health_app.run(host='0.0.0.0', port=8080)
+
+# ---------------------------
+# Main entry point
+# ---------------------------
 if __name__ == "__main__":
+    # Run Flask health-check server in background
+    threading.Thread(target=run_health_server, daemon=True).start()
+
     print("✅ Watermark Remover Bot Started")
     app.run()
