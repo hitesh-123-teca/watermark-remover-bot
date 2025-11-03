@@ -8,3 +8,4 @@ tgcrypto
 requests
 tqdm
 python-dotenv
+Flask
