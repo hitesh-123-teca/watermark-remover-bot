@@ -9,13 +9,19 @@ from pytesseract import Output
 
 # Load environment variables (Koyeb will set these)
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "7852091851:AAHQr_w4hi-RuJ5sJ8JvQCo_fOZtf6EWhvk")
-API_ID = os.environ.get("API_ID", "21688431")
+API_ID = int(os.environ.get("API_ID", "21688431"))
 API_HASH = os.environ.get("API_HASH", "db274cb8e9167e731d9c8305197badeb")
 
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is not set. Please set BOT_TOKEN in environment variables.")
+if not all([BOT_TOKEN, API_ID, API_HASH]):
+    raise RuntimeError("Missing one of BOT_TOKEN, API_ID, or API_HASH.")
 
-app = Client("watermark_remover_bot", bot_token=BOT_TOKEN)
+# ✅ FIXED: include api_id and api_hash
+app = Client(
+    "watermark_remover_bot",
+    bot_token=BOT_TOKEN,
+    api_id=API_ID,
+    api_hash=API_HASH
+)
 
 def extract_frames(video_path, num_frames=5):
     """Extract first few frames from video"""
@@ -52,13 +58,11 @@ def detect_text_bounding_boxes(frame):
 def apply_blur_on_boxes(frame, boxes):
     """Apply strong blur on detected text boxes"""
     for (x, y, w, h, text) in boxes:
-        # clamp coordinates
         x1, y1 = max(0, x), max(0, y)
         x2, y2 = min(frame.shape[1], x + w), min(frame.shape[0], y + h)
         if x2 <= x1 or y2 <= y1:
             continue
         roi = frame[y1:y2, x1:x2]
-        # if ROI is too small skip heavy blur
         ksize = (99, 99) if roi.shape[0] > 10 and roi.shape[1] > 10 else (21, 21)
         blurred_roi = cv2.GaussianBlur(roi, ksize, 30)
         frame[y1:y2, x1:x2] = blurred_roi
@@ -74,14 +78,12 @@ def process_video(input_path, output_path, boxes_to_apply):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-    frame_idx = 0
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         frame = apply_blur_on_boxes(frame, boxes_to_apply)
         out.write(frame)
-        frame_idx += 1
 
     cap.release()
     out.release()
@@ -104,7 +106,6 @@ async def handle_video(client: Client, message: Message):
     for frame in frames:
         boxes = detect_text_bounding_boxes(frame)
         for b in boxes:
-            # naive dedupe by position and size
             key = (b[0], b[1], b[2], b[3])
             if not any(abs(key[0]-x) < 10 and abs(key[1]-y) < 10 and abs(key[2]-w) < 10 and abs(key[3]-h) < 10 for (x,y,w,h,_) in merged_boxes):
                 merged_boxes.append(b)
@@ -122,12 +123,8 @@ async def handle_video(client: Client, message: Message):
     process_video(video_path, output_path, merged_boxes)
 
     await message.reply_video(video=output_path, caption="✅ Watermark blurred/removed.")
-    # Cleanup
     try:
         os.remove(video_path)
-    except Exception:
-        pass
-    try:
         os.remove(output_path)
     except Exception:
         pass
