@@ -1,0 +1,10 @@
+numpy<2
+opencv-python-headless
+pillow
+moviepy
+pytesseract
+pyrogram
+tgcrypto
+requests
+tqdm
+python-dotenv
