@@ -1,7 +1,7 @@
 numpy<2
 opencv-python-headless
 pillow
-moviepy
+moviepy==1.0.3
 pytesseract
 pyrogram
 tgcrypto
